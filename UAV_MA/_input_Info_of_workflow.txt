@@ -1,0 +1,11 @@
+-workflow_ID	1	-CurrTask_ID	1	-SuccTask_ID	2	-needed_bandwidth	10
+-workflow_ID	1	-CurrTask_ID	1	-SuccTask_ID	3	-needed_bandwidth	125
+-workflow_ID	1	-CurrTask_ID	2	-SuccTask_ID	4	-needed_bandwidth	65
+-workflow_ID	1	-CurrTask_ID	3	-SuccTask_ID	4	-needed_bandwidth	35
+-workflow_ID	1	-CurrTask_ID	4	-SuccTask_ID	5	-needed_bandwidth	135
+-workflow_ID	1	-CurrTask_ID	4	-SuccTask_ID	6	-needed_bandwidth	170
+-workflow_ID	1	-CurrTask_ID	5	-SuccTask_ID	7	-needed_bandwidth	240
+-workflow_ID	1	-CurrTask_ID	5	-SuccTask_ID	8	-needed_bandwidth	35
+-workflow_ID	1	-CurrTask_ID	6	-SuccTask_ID	8	-needed_bandwidth	210
+-workflow_ID	1	-CurrTask_ID	7	-SuccTask_ID	9	-needed_bandwidth	150
+-workflow_ID	1	-CurrTask_ID	8	-SuccTask_ID	9	-needed_bandwidth	50

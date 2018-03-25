@@ -1,0 +1,9 @@
+-workflow_ID	1	-task_ID	1	-Cap	13
+-workflow_ID	1	-task_ID	2	-Cap	48
+-workflow_ID	1	-task_ID	3	-Cap	12
+-workflow_ID	1	-task_ID	4	-Cap	33
+-workflow_ID	1	-task_ID	5	-Cap	5
+-workflow_ID	1	-task_ID	6	-Cap	40
+-workflow_ID	1	-task_ID	7	-Cap	20
+-workflow_ID	1	-task_ID	8	-Cap	31
+-workflow_ID	1	-task_ID	9	-Cap	32
