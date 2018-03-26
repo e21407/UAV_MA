@@ -524,6 +524,7 @@ def Set_timer_for_all_task_flows(current_ts):
 
 #========================================================================
 def Set_timer_for_a_task_flow(current_ts, WF_ID, taskA_ID, taskB_ID):
+    global Timers
     feasible_newUAV_ID_rdm = Select_a_rdm_NIU_UAV_for_the_task(WF_ID, taskB_ID)
     if -1 == feasible_newUAV_ID_rdm:
         return
@@ -558,6 +559,7 @@ def Set_timer_for_a_task_flow(current_ts, WF_ID, taskA_ID, taskB_ID):
     
     # record the timer
     Timer_Key = (WF_ID, taskA_ID, taskB_ID)
+    
     if Timer_Key not in Timers.keys():
         Timers[Timer_Key] = [0, 0, -1, -1, -1, -1]
         Timers[Timer_Key][0] = current_ts
@@ -603,13 +605,18 @@ def Delete_expired_timer_items_after_replacement(WF_ID, taskA_ID, taskB_ID):
         del Timers[(WF_ID, taskA_ID, taskB_ID)]
 
 
+def Delete_all_timer():
+    global Timers
+    Timers.clear()
+
+
 def RESET(current_ts):
     Set_timer_for_all_task_flows(current_ts)
 
 
 def main():
     print "123 main() begin" 
-    global step_times
+    global step_times, Timers
     initializeReadData(CandPaths_file, Info_of_WF_file, CapLinks_file, Info_of_task_file, Info_of_UAVs_file)
     initialize_assign_task_to_UAV_randomly()
     Update_system_metrics()
@@ -681,7 +688,7 @@ def main():
                         LogReplacement.write('true replace predecessor\n')
                         Replace_the_selected_new_UAV_or_path_for_a_flow(WF_ID, key[0], key[1], val[0], val[0], val[1], val[2])
                 Delete_expired_timer_items_after_replacement(WF_ID, taskA_ID, taskB_ID)
-                
+                Delete_all_timer()
                 
                 #====================↓↓↓========================================================
 #                 for key, val in ret_timer_check_result.items():

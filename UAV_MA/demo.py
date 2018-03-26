@@ -1,10 +1,11 @@
-list = [('mark', 1), ('ben', 2)]
-print list[1][0]
-
-lst = [1, 2, 3, 4, 5, 6]
-lst.pop(2)
-print lst
-
-num = 0
-if not num:
-    print '1 is true'
+dict = {'a':[1,2,3], 'b':[1,2,4], 'c':[1,2,5]}
+print dict
+for key, val in dict.items():
+    print key
+    print val
+    
+dict.clear()
+print dict
+for key, val in dict.items():
+    print key
+    print val
