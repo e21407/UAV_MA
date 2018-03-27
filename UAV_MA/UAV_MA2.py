@@ -7,7 +7,6 @@ Created on 2018-03-13
 
 import random
 import math
-from networkx.algorithms.community.quality import performance
 
 #===================== global variable ======================#
 CandPathIDSet_for_2_UAVs = {}  ## {<Src-UAV,Dst-UAV>:[path1_id,path2_id,...]}, the candidate path-set for all  pair of UAVs. !!!! SPECIAL-CASE-20161109: EVEN a SW to itself has an individual path_ID, 2016-1109!!!!!
@@ -25,9 +24,9 @@ Global_PATH_ID_START_COUNTING = 0  # MUST NOT be changed from 0, 2016-1109.
 
 #===================== input file name ======================#
 CandPaths_file = "_input_PathSet.txt"
-Info_of_WF_file = "_input_Info_of_workflow4.txt"
+Info_of_WF_file = "_input_Info_of_workflow_a_flow.txt"
 CapLinks_file = "_input_Cap_links.txt"
-Info_of_task_file = "_input_Info_of_task4.txt"
+Info_of_task_file = "_input_Info_of_task_a_flow.txt"
 Info_of_UAVs_file = "_input_Info_of_UAVs.txt"
 
 #=================================================

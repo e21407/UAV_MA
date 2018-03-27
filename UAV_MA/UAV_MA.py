@@ -24,9 +24,9 @@ Global_PATH_ID_START_COUNTING = 0  # MUST NOT be changed from 0, 2016-1109.
 
 #===================== input file name ======================#
 CandPaths_file = "_input_PathSet.txt"
-Info_of_WF_file = "_input_Info_of_workflow3.txt"
+Info_of_WF_file = "_input_Info_of_workflow5.txt"
+Info_of_task_file = "_input_Info_of_task5.txt"
 CapLinks_file = "_input_Cap_links.txt"
-Info_of_task_file = "_input_Info_of_task3.txt"
 Info_of_UAVs_file = "_input_Info_of_UAVs.txt"
 
 #=================================================
@@ -38,7 +38,7 @@ WEIGHT_OF_ROUTING_COST = 1
 WEIGHT_OF_COMPUTE_COST = 1
 
 # ==================================== USE-CASE ==============================================
-T = 100;  # # The total running period of system.
+T = 200;  # # The total running period of system.
 STEP_TO_RUN = 0.001;  # # The length of time-slot, e.g., 0.001 second is the BEST step after testing.
 STEP_TO_CHECK_TIMER = STEP_TO_RUN;  # # The step (length of interval) of check timer-expiration, e.g., 0.1 second.
 Beta = 6;  # # The parameter in the theoretical derivation.
@@ -542,15 +542,18 @@ def Set_timer_for_a_task_flow(current_ts, WF_ID, taskA_ID, taskB_ID):
     Xf_prime = Fake_Replace_UAV_or_Path_for_a_task_to_return_estimated_sysObj(WF_ID, taskA_ID, taskB_ID, UAVID_old, UAVID_new, pathID_old, pathID_new)
     
     # write to log
-    LogRun.write('WF_ID:%s, taskA_ID:%s, taskB_ID:%s, From UAV %s to UAV %s, old desUAVID:%s\n' % (str(WF_ID), str(taskA_ID), str(taskB_ID), str(UAVID_of_TaskA), str(UAVID_new), str(UAVID_old)))
-    LogRun.write('From path %s to path %s\n' % (str(pathID_old), str(pathID_new)))
-    LogRun.write('old_path:%s\n' % str(Path_database[pathID_old]))
-    LogRun.write('new_path:%s\n' % str(Path_database[pathID_new]))
-    LogRun.write('Xf:%f, Xf_prime:%f, gap:%f \n\n' % (Xf, Xf_prime, Xf_prime - Xf))
+#     LogRun.write('WF_ID:%s, taskA_ID:%s, taskB_ID:%s, From UAV %s to UAV %s, old desUAVID:%s\n' % (str(WF_ID), str(taskA_ID), str(taskB_ID), str(UAVID_of_TaskA), str(UAVID_new), str(UAVID_old)))
+#     LogRun.write('From path %s to path %s\n' % (str(pathID_old), str(pathID_new)))
+#     LogRun.write('old_path:%s\n' % str(Path_database[pathID_old]))
+#     LogRun.write('new_path:%s\n' % str(Path_database[pathID_new]))
+#     LogRun.write('Xf:%f, Xf_prime:%f, gap:%f \n\n' % (Xf, Xf_prime, Xf_prime - Xf))
     
     # print Xf_prime - Xf
     # print 'Xf:%f, Xf_prime:%f, gap:%f'%(Xf, Xf_prime, Xf_prime - Xf)
-    exp_item = math.exp(Tau - 0.5 * Beta * (Xf_prime - Xf))
+    try:
+        exp_item = math.exp(Tau - 0.5 * Beta * (Xf_prime - Xf))
+    except:
+        exp_item =  math.exp(709)
     mean_timer_exp = 1.0 * exp_item / (len(Lst_Assignable_UAV_ID) - 1);
     # print 'exp_item: %f'%exp_item
     lambda_exp_random_number_seed = 1.0 / mean_timer_exp;
@@ -745,10 +748,11 @@ def main():
         
         current_ts += STEP_TO_RUN
         step_times += 1
+        Update_system_metrics()
         performance = global_system_throughput - global_weighted_RoutingCost - global_weighted_computeCost
-        LogPerformanceRecord.write("-step:%d  -performance\t%2.2f\t-throughput\t%2.2f\t-RoutingCost\t%2.2f\t-computeCost\t%2.3f\n" % (step_times, performance, global_system_throughput, global_weighted_RoutingCost, global_weighted_computeCost))
         if (step_times % 1 == 0):
-            Update_system_metrics()
+            LogPerformanceRecord.write("-step:%d  -performance\t%2.2f\t-throughput\t%2.2f\t-RoutingCost\t%2.2f\t-computeCost\t%2.3f\n" % (step_times, performance, global_system_throughput, global_weighted_RoutingCost, global_weighted_computeCost))
+        if (step_times % 1 == 0):
             Print_Current_Sys_Info()         
             
     LogRun.close()
