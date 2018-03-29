@@ -8,6 +8,13 @@ Created on 2018-03-13
 import random
 import math
 
+#===================== input file name ======================#
+CandPaths_file = "_input_PathSet.txt"
+Info_of_WF_file = "_input_Info_of_workflow5.txt"
+Info_of_task_file = "_input_Info_of_task5.txt"
+CapLinks_file = "_input_Cap_links.txt"
+Info_of_UAVs_file = "_input_Info_of_UAVs.txt"
+
 #===================== global variable ======================#
 CandPathIDSet_for_2_UAVs = {}  ## {<Src-UAV,Dst-UAV>:[path1_id,path2_id,...]}, the candidate path-set for all  pair of UAVs. !!!! SPECIAL-CASE-20161109: EVEN a SW to itself has an individual path_ID, 2016-1109!!!!!
 Path_database = {}  # # {<Path_id>:pathContent}, e.g., pathContent:[(1, 2), (2, 5), (5, 3)]; or EMPTY list [].
@@ -22,15 +29,8 @@ Timers = {}  # #{<WF_ID, taskA_ID, taskB_ID>:[ts_begin, timer_len, pathID_old, p
 #=============================================================
 Global_PATH_ID_START_COUNTING = 0  # MUST NOT be changed from 0, 2016-1109.
 
-#===================== input file name ======================#
-CandPaths_file = "_input_PathSet.txt"
-Info_of_WF_file = "_input_Info_of_workflow5.txt"
-Info_of_task_file = "_input_Info_of_task5.txt"
-CapLinks_file = "_input_Cap_links.txt"
-Info_of_UAVs_file = "_input_Info_of_UAVs.txt"
-
 #=================================================
-global_Aggregated_TR_in_acrs = {}  # # {(u,v): aggregated-TR-in-arc-uv }
+Aggregated_TR_in_acrs = {}  # {(u,v): aggregated-TR-in-arc-uv }. This variable record the aggregated traffic rate on each UAV link
 global_system_throughput = 0.0
 global_weighted_RoutingCost = 0.0
 global_weighted_computeCost = 0.0
@@ -152,8 +152,8 @@ def initializeReadData(_in_CandPaths_file, _in_Info_of_WF_file, _in_CapLinks_fil
                 Cap_links[(u_id, v_id)] = CapVal  # #
                 
             # # --- b. initializeReadData the global_Aggregated_TR_in_acrs.
-            if (u_id, v_id) not in global_Aggregated_TR_in_acrs:
-                global_Aggregated_TR_in_acrs[(u_id, v_id)] = 0  # ## ---- 3 Read the Capacity of links:~    
+            if (u_id, v_id) not in Aggregated_TR_in_acrs:
+                Aggregated_TR_in_acrs[(u_id, v_id)] = 0  # ## ---- 3 Read the Capacity of links:~    
     
     #---- 4. Read the given Info_of_task data
     global Info_of_task;
@@ -186,42 +186,106 @@ def initializeReadData(_in_CandPaths_file, _in_Info_of_WF_file, _in_CapLinks_fil
 
 
 # randomly assign task to UAV and find a path for the tasks have communication
-def initialize_assign_task_to_UAV_randomly():
-    global CandPathIDSet_for_2_UAVs, Path_database, Info_of_task, Info_of_WF, Cap_links, Info_of_UAV
+def Assign_task_to_UAV_randomly(WF):
+    global CandPathIDSet_for_2_UAVs, Path_database, Info_of_task, Cap_links, Info_of_UAV
     
     numOfUAVs = len(Lst_Assignable_UAV_ID)
-    for WF_ID, content in Info_of_WF.items():
+    for WF_ID, content in WF.items():
         for a_flow in content:
             currTaskID = a_flow[0]
             succTaskID = a_flow[1]
             # --- assign the task to the UAV and find the path randomly
-            while 1:
+            tryNo = 10
+            while tryNo > 0:
                 # randomly select  UAVs
                 idx_UAV1 = random.randint(0, numOfUAVs - 1)
                 idx_UAV2 = random.randint(0, numOfUAVs - 1)
                 if idx_UAV1 == idx_UAV2:
-                    print 'hit'
+                    #print 'hit'
                     continue
                 UAV_ID1 = Lst_Assignable_UAV_ID[idx_UAV1]
                 UAV_ID2 = Lst_Assignable_UAV_ID[idx_UAV2]
                 pathID_list = Find_pathID_list_for_a_pair_of_UAVs(UAV_ID1, UAV_ID2)
                 if pathID_list:
+                    # randomly select path
+                    idx_path = random.randint(0, len(pathID_list) - 1)
+                    pathID = pathID_list[idx_path]
+                    # check path
+                    if not Check_whether_a_path_is_feasible_to_the_taskSegment(pathID, WF_ID, currTaskID, succTaskID):
+                        tryNo -= 1
+                        continue
                     # assign the task to the UAV
                     if not Check_whether_a_task_has_assignment(WF_ID, currTaskID):
                         var_x_wtk[(WF_ID, currTaskID, UAV_ID1)] = 1
                     if not Check_whether_a_task_has_assignment(WF_ID, succTaskID):
                         var_x_wtk[(WF_ID, succTaskID, UAV_ID2)] = 1
-                    # randomly select path
-                    idx_path = random.randint(0, len(pathID_list) - 1)
-                    pathID = pathID_list[idx_path]
-                    # #注意这里在选路之前没有进行判断路径上的带宽是否满足两个任务之间的数据传输要求
-                    var_y_wpab[WF_ID, pathID, currTaskID, succTaskID] = 1
+                    
+                    # var_y_wpab[WF_ID, pathID, currTaskID, succTaskID] = 1
+                    One_a_Path(pathID, WF_ID, currTaskID, succTaskID)
+                    
                     LogReplacement.write('initializeReadData set -- WF_ID:%d, pathID:%d, currTaskID:%d, succTaskID:%d\n\n' % (WF_ID, pathID, currTaskID, succTaskID))
                     break
-    print 'initialize_assign_task_to_UAV_randomly done'
-#=======================end of function initialize_assign_task_to_UAV_randomly========     
+#     print 'Assign_task_to_UAV_randomly done'
+#=======================end of function Assign_task_to_UAV_randomly========     
+
+#============================================================================
+def Check_whether_a_path_is_feasible_to_the_taskSegment(pathID, WF_ID, taskA_ID, taskB_ID):
+    global Path_database, Info_of_WF, Cap_links, Aggregated_TR_in_acrs
+    path_content = Path_database[pathID]
+    if path_content:
+        # get the need bandwidth of a task flow
+        needed_bandwidth = Get_the_need_bandwidth_of_a_task_flow(WF_ID, taskA_ID, taskB_ID)
+        # check whether all the available bandwidth of segment in a path are larger than the needed bandwidth of a task flow
+        for segment in path_content:
+            aggregated_TR = Aggregated_TR_in_acrs[segment]
+            link_cap = Cap_links[segment]
+            if link_cap - aggregated_TR < needed_bandwidth:
+                # if one of the available bandwidth of segment in a path is unsatisfied, the this path is not feasible
+                return 0
+    return 1
+#============================================================================
+
+     
+#============================================================================
+def Get_the_need_bandwidth_of_a_task_flow(WF_ID, taskA_ID, taskB_ID):
+    global Info_of_WF
+    needed_bandwidth = -1
+    for val in Info_of_WF[WF_ID]:
+        if val[0] == taskA_ID and val[1] == taskB_ID:
+            needed_bandwidth = val[2]
+            break
+    return needed_bandwidth
+#============================================================================
+
+#============================================================================
+def One_a_Path(pathID, WF_ID, taskA_ID, taskB_ID):
+    global Path_database, Info_of_WF, Aggregated_TR_in_acrs
+    path_content = Path_database[pathID]
+    needed_bandwidth = Get_the_need_bandwidth_of_a_task_flow(WF_ID, taskA_ID, taskB_ID)
+    # update the aggregated traffic rate in all segment
+    for segment in path_content:
+        Aggregated_TR_in_acrs[segment] += needed_bandwidth
+        
+    var_y_wpab[WF_ID, pathID, taskA_ID, taskB_ID] = 1
+    LogReplacement.write('set var_y_wpab to 1 --WF_ID:%d, pathID_new:%d, taskA_ID:%d, taskB_ID:%d\n' % (WF_ID, pathID, taskA_ID, taskB_ID))
+#============================================================================
 
 
+#============================================================================
+def Zero_a_Path(pathID, WF_ID, taskA_ID, taskB_ID):
+    global Path_database, Info_of_WF, Aggregated_TR_in_acrs
+    path_content = Path_database[pathID]
+    needed_bandwidth = Get_the_need_bandwidth_of_a_task_flow(WF_ID, taskA_ID, taskB_ID)
+    # update the aggregated traffic rate in all segment
+    for segment in path_content:
+        Aggregated_TR_in_acrs[segment] -= needed_bandwidth
+    if (WF_ID, pathID, taskA_ID, taskB_ID) in var_y_wpab.keys():
+        del var_y_wpab[(WF_ID, pathID, taskA_ID, taskB_ID)]
+        LogReplacement.write('del var_y_wpab --WF_ID:%d, pathID_old:%d, taskA_ID:%d, taskB_ID:%d\n' % (WF_ID, pathID, taskA_ID, taskB_ID))
+#============================================================================
+
+
+#============================================================================
 def Check_whether_a_task_has_assignment(WF_ID, task_ID):
     for w, t, _ in var_x_wtk:
         if w == WF_ID and t == task_ID:
@@ -230,7 +294,7 @@ def Check_whether_a_task_has_assignment(WF_ID, task_ID):
     # return 0 means the task has not assigned to a UAV
     return 0
 
- 
+#============================================================================
 def Find_pathID_list_for_a_pair_of_UAVs(UAV_ID1, UAV_ID2):
     if (UAV_ID1, UAV_ID2) in CandPathIDSet_for_2_UAVs:
         return CandPathIDSet_for_2_UAVs[(UAV_ID1, UAV_ID2)]
@@ -261,6 +325,16 @@ def Get_list_of_satisfied_WF_ID():
     return ret_satisfied_WF_ID
 #=========================end of function Get_list_of_satisfied_WF_ID()===============
 
+#============================================================================
+# this function find out the ID and information of all unsatisfied workflow
+def Get_the_set_of_unsatisfied_WF():
+    global Info_of_WF
+    result_dict = {}
+    lst_satisfied_WF_ID = Get_list_of_satisfied_WF_ID()
+    for key, val in Info_of_WF.items():
+        if key not in lst_satisfied_WF_ID:
+            result_dict[key] = val
+    return result_dict
 
 #=====================================================================================
 def Update_system_metrics():
@@ -396,12 +470,42 @@ def Get_list_of_NIU_pathIDs_between_2_task(WF_ID, taskA_ID, taskB_ID):
 
 def Select_a_rdm_path_for_a_pair_of_UAVs(UAV1_ID, UAV2_ID):
     candPath = Find_pathID_list_for_a_pair_of_UAVs(UAV1_ID, UAV2_ID)
+    if  not candPath:
+        print '22'
     idx_targetPath = random.randint(0, len(candPath) - 1)
     return candPath[idx_targetPath]
 
-
 #===this function will do replacement process when a task assignment or path is changed
 #=== for a task flow (taskA, taskB), we only do replacement to the taskB===============
+# def Replace_the_selected_new_UAV_or_path_for_a_flow(WF_ID, taskA_ID, taskB_ID, UAVID_old, UAVID_new, pathID_old, pathID_new):
+#     LogReplacement.write('do replacement for --WF_ID:%d,  taskA_ID:%d, taskB_ID:%d, UAVID_old:%d, UAVID_new:%d, pathID_old:%d, pathID_new:%d\n' % (WF_ID, taskA_ID, taskB_ID, UAVID_old, UAVID_new, pathID_old, pathID_new))
+#     global var_x_wtk, var_y_wpab
+#     global len_of_var_y, len_of_var_y_flag
+#     if UAVID_old != UAVID_new:
+#         # 1.replace the task to a new UAV
+#         if (WF_ID, taskB_ID, UAVID_old) in var_x_wtk.keys():
+#             # 1.1 remove the task from the old UAV
+#             del var_x_wtk[(WF_ID, taskB_ID, UAVID_old)]
+#             LogReplacement.write('del var_x_wtk of --WF_ID:%d, taskB_ID:%d, UAVID_old:%d\n' % (WF_ID, taskB_ID, UAVID_old))
+#         # 1.2 assigned the task to a new UAV
+#         var_x_wtk[(WF_ID, taskB_ID, UAVID_new)] = 1
+#         LogReplacement.write('set var_x_wtk to 1 -- WF_ID:%d, taskB_ID:%d, UAVID_new:%d\n' % (WF_ID, taskB_ID, UAVID_new))
+#         
+#     # 2. change the path to the new UAV
+#     if (WF_ID, pathID_old, taskA_ID, taskB_ID) in  var_y_wpab.keys():
+#         # 2.1 remove the old path
+#         del var_y_wpab[(WF_ID, pathID_old, taskA_ID, taskB_ID)]
+#         LogReplacement.write('del var_y_wpab --WF_ID:%d, pathID_old:%d, taskA_ID:%d, taskB_ID:%d\n' % (WF_ID, pathID_old, taskA_ID, taskB_ID))
+#     # 2.2 start using the new path
+#     var_y_wpab[(WF_ID, pathID_new, taskA_ID, taskB_ID)] = 1
+#     LogReplacement.write('set var_y_wpab to 1 --WF_ID:%d, pathID_new:%d, taskA_ID:%d, taskB_ID:%d\n' % (WF_ID, pathID_new, taskA_ID, taskB_ID))
+#     LogReplacement.write('\n')
+#     len_of_var_y = len(var_y_wpab)
+#     # monitor whether it will make difference to the length of assigned path. If so, it means a bug shows up!!! 
+#     if len_of_var_y != len_of_var_y_flag:
+#         len_of_var_y_flag = len_of_var_y
+
+
 def Replace_the_selected_new_UAV_or_path_for_a_flow(WF_ID, taskA_ID, taskB_ID, UAVID_old, UAVID_new, pathID_old, pathID_new):
     LogReplacement.write('do replacement for --WF_ID:%d,  taskA_ID:%d, taskB_ID:%d, UAVID_old:%d, UAVID_new:%d, pathID_old:%d, pathID_new:%d\n' % (WF_ID, taskA_ID, taskB_ID, UAVID_old, UAVID_new, pathID_old, pathID_new))
     global var_x_wtk, var_y_wpab
@@ -417,18 +521,17 @@ def Replace_the_selected_new_UAV_or_path_for_a_flow(WF_ID, taskA_ID, taskB_ID, U
         LogReplacement.write('set var_x_wtk to 1 -- WF_ID:%d, taskB_ID:%d, UAVID_new:%d\n' % (WF_ID, taskB_ID, UAVID_new))
         
     # 2. change the path to the new UAV
-    if (WF_ID, pathID_old, taskA_ID, taskB_ID) in  var_y_wpab.keys():
-        # 2.1 remove the old path
-        del var_y_wpab[(WF_ID, pathID_old, taskA_ID, taskB_ID)]
-        LogReplacement.write('del var_y_wpab --WF_ID:%d, pathID_old:%d, taskA_ID:%d, taskB_ID:%d\n' % (WF_ID, pathID_old, taskA_ID, taskB_ID))
+    # 2.1 remove the old path
+    Zero_a_Path(pathID_old, WF_ID, taskA_ID, taskB_ID)
+    
     # 2.2 start using the new path
-    var_y_wpab[(WF_ID, pathID_new, taskA_ID, taskB_ID)] = 1
-    LogReplacement.write('set var_y_wpab to 1 --WF_ID:%d, pathID_new:%d, taskA_ID:%d, taskB_ID:%d\n' % (WF_ID, pathID_new, taskA_ID, taskB_ID))
+    One_a_Path(pathID_new, WF_ID, taskA_ID, taskB_ID)
+    
     LogReplacement.write('\n')
     len_of_var_y = len(var_y_wpab)
     # monitor whether it will make difference to the length of assigned path. If so, it means a bug shows up!!! 
     if len_of_var_y != len_of_var_y_flag:
-        len_of_var_y_flag = len_of_var_y
+        len_of_var_y_flag = len_of_var_y        
 
 
 #===================begin================================================================
@@ -512,11 +615,13 @@ def Find_the_flow_list_of_predecessor_task(WF_ID, task_ID):
 
 def Print_Current_Sys_Info():
     Sys_performance = global_system_throughput - global_weighted_RoutingCost - global_weighted_computeCost
-    print "-step:%d  -performance\t%2.2f\t-throughput\t%2.2f\t-RoutingCost\t%2.2f\t-computeCost\t%2.2f\t" % (step_times, Sys_performance, global_system_throughput, global_weighted_RoutingCost, global_weighted_computeCost)
+    print "-step:%d  -performance\t%2.2f\t-thr\t%2.2f\t-RoutingCost\t%2.2f\t-computeCost\t%2.2f\t" % (step_times, Sys_performance, global_system_throughput, global_weighted_RoutingCost, global_weighted_computeCost)
 
 
 def Set_timer_for_all_task_flows(current_ts):
-    for WF_ID, lst_task_flows in Info_of_WF.items():
+    lst_of_satisfied_WF_ID = Get_list_of_satisfied_WF_ID()
+    for WF_ID in lst_of_satisfied_WF_ID:
+        lst_task_flows = Info_of_WF[WF_ID]
         for a_flow in lst_task_flows:
             taskA_ID, taskB_ID = a_flow[0], a_flow[1]
             Set_timer_for_a_task_flow(current_ts, WF_ID, taskA_ID, taskB_ID)
@@ -531,9 +636,15 @@ def Set_timer_for_a_task_flow(current_ts, WF_ID, taskA_ID, taskB_ID):
     
     UAVID_new = feasible_newUAV_ID_rdm
     UAVID_old = Get_the_IU_UAV_ID_of_a_task(WF_ID, taskB_ID)
+#     if UAVID_old < 0 or UAVID_new < 0:
+#         return
     pathID_old = Get_the_IU_pathID_between_two_task(WF_ID, taskA_ID, taskB_ID)
     UAVID_of_TaskA = Get_the_IU_UAV_ID_of_a_task(WF_ID, taskA_ID)
     pathID_new = Select_a_rdm_path_for_a_pair_of_UAVs(UAVID_of_TaskA, UAVID_new)
+#     if pathID_old < 0 or pathID_new < 0:
+#         return
+    if not Check_whether_a_path_is_feasible_to_the_taskSegment(pathID_new, WF_ID, taskA_ID, taskB_ID):
+        return
     
     # do not forget to update the system metrics info before get the performance of sys
     Update_system_metrics()
@@ -553,7 +664,7 @@ def Set_timer_for_a_task_flow(current_ts, WF_ID, taskA_ID, taskB_ID):
     try:
         exp_item = math.exp(Tau - 0.5 * Beta * (Xf_prime - Xf))
     except:
-        exp_item =  math.exp(709)
+        exp_item = math.exp(709)
     mean_timer_exp = 1.0 * exp_item / (len(Lst_Assignable_UAV_ID) - 1);
     # print 'exp_item: %f'%exp_item
     lambda_exp_random_number_seed = 1.0 / mean_timer_exp;
@@ -619,9 +730,9 @@ def RESET(current_ts):
 
 def main():
     print "123 main() begin" 
-    global step_times, Timers
+    global step_times, Timers, Info_of_WF
     initializeReadData(CandPaths_file, Info_of_WF_file, CapLinks_file, Info_of_task_file, Info_of_UAVs_file)
-    initialize_assign_task_to_UAV_randomly()
+    Assign_task_to_UAV_randomly(Info_of_WF)
     Update_system_metrics()
     Print_Current_Sys_Info()
     # print (global_system_throughput, global_weighted_RoutingCost, global_weighted_computeCost)
@@ -693,55 +804,7 @@ def main():
                 Delete_expired_timer_items_after_replacement(WF_ID, taskA_ID, taskB_ID)
                 Delete_all_timer()
                 
-                #====================↓↓↓========================================================
-#                 for key, val in ret_timer_check_result.items():
-#                     WF_ID = key[0]
-#                     taskA_ID = key[1]
-#                     taskB_ID = key[2] 
-#                     pathID_old = val[0];  # # Get the returned pathID_old.
-#                     pathID_new = val[1];  # # Get the returned pathID_new.
-#                     UAVID_old = val[2];  # # Get the returned Dst_MBox_cur.
-#                     UAVID_new = val[3];  # # Get the returned Dst_MBox_new.
-#                    
-#                     # do replace
-#                     LogReplacement.write('true replace\n')
-#                     Replace_the_selected_new_UAV_or_path_for_a_flow(WF_ID, taskA_ID, taskB_ID, UAVID_old, UAVID_new, pathID_old, pathID_new)    
-#                     # find the successor task flow
-#                     lst_affected_successor_task_flow = Find_the_flow_list_of_successor_task(WF_ID, taskB_ID)
-#                     
-#                     dct_Info_of_successor_task_flow = {}
-#                     for a_flow in lst_affected_successor_task_flow:
-#                         IU_UAVb_ID = Get_the_IU_UAV_ID_of_a_task(WF_ID, a_flow[1])
-#                         old_pathID = Get_the_IU_pathID_between_two_task(WF_ID, a_flow[0], a_flow[1])
-#                         taskA_UAV_ID = Get_the_IU_UAV_ID_of_a_task(WF_ID, a_flow[0])
-#                         taskB_UAV_ID = Get_the_IU_UAV_ID_of_a_task(WF_ID, a_flow[1])
-#                         new_pathID = Select_a_rdm_path_for_a_pair_of_UAVs(taskA_UAV_ID, taskB_UAV_ID)
-#                         dct_Info_of_successor_task_flow[(a_flow[0], a_flow[1])] = (IU_UAVb_ID, old_pathID, new_pathID)
-#                         # do replace to the affected successor task
-#                         for key, val in dct_Info_of_successor_task_flow.items():
-#                             LogReplacement.write('true replace successor\n')
-#                             Replace_the_selected_new_UAV_or_path_for_a_flow(WF_ID, key[0], key[1], val[0], val[0], val[1], val[2])
-#                     
-#                     # find the predecessor task flow
-#                     result_list = Find_the_flow_list_of_predecessor_task(WF_ID, taskB_ID)
-#                     # remove the current task flow which have been replaced from the predecessor task flow list
-#                     lst_affected_predecessor_task_flow = [(a_flow[0], a_flow[1]) for a_flow in result_list if a_flow[0] != taskA_ID]
-#                     
-#                     dct_Info_of_predecessor_task_flow = {}
-#                     for a_flow in lst_affected_predecessor_task_flow:
-#                         IU_UAVb_ID = Get_the_IU_UAV_ID_of_a_task(WF_ID, a_flow[1])
-#                         old_pathID = Get_the_IU_pathID_between_two_task(WF_ID, a_flow[0], a_flow[1])
-#                         taskA_UAV_ID = Get_the_IU_UAV_ID_of_a_task(WF_ID, a_flow[0])
-#                         taskB_UAV_ID = Get_the_IU_UAV_ID_of_a_task(WF_ID, a_flow[1])
-#                         new_pathID = Select_a_rdm_path_for_a_pair_of_UAVs(taskA_UAV_ID, taskB_UAV_ID)
-#                         dct_Info_of_predecessor_task_flow[(a_flow[0], a_flow[1])] = (IU_UAVb_ID, old_pathID, new_pathID)
-#                         dct_Info_of_predecessor_task_flow[(a_flow[0], a_flow[1])] = (IU_UAVb_ID, old_pathID, new_pathID)
-#                         for key, val in dct_Info_of_predecessor_task_flow.items():
-#                             LogReplacement.write('true replace predecessor\n')
-#                             Replace_the_selected_new_UAV_or_path_for_a_flow(WF_ID, key[0], key[1], val[0], val[0], val[1], val[2])
-#                     Delete_expired_timer_items_after_replacement(WF_ID, taskA_ID, taskB_ID)
-#                     break
-                #====================↑↑↑===============================================================
+
                 
         if 1 == RESET_Msg:
             RESET(current_ts)
@@ -751,10 +814,15 @@ def main():
         Update_system_metrics()
         performance = global_system_throughput - global_weighted_RoutingCost - global_weighted_computeCost
         if (step_times % 1 == 0):
-            LogPerformanceRecord.write("-step:%d  -performance\t%2.2f\t-throughput\t%2.2f\t-RoutingCost\t%2.2f\t-computeCost\t%2.3f\n" % (step_times, performance, global_system_throughput, global_weighted_RoutingCost, global_weighted_computeCost))
+            LogPerformanceRecord.write("-step:%d  -performance\t%2.2f\t-thr\t%2.2f\t-RoutingCost\t%2.2f\t-computeCost\t%2.3f\n" % (step_times, performance, global_system_throughput, global_weighted_RoutingCost, global_weighted_computeCost))
         if (step_times % 1 == 0):
             Print_Current_Sys_Info()         
-            
+        
+        #find out the unsatisfied workflow and try to assign them to the UAV once again
+        unsatisfied_WF = Get_the_set_of_unsatisfied_WF()
+        Assign_task_to_UAV_randomly(unsatisfied_WF)
+    
+    
     LogRun.close()
     LogVar_X.close()
     LogVar_Y.close()

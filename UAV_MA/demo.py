@@ -1,11 +1,4 @@
-dict = {'a':[1,2,3], 'b':[1,2,4], 'c':[1,2,5]}
-print dict
-for key, val in dict.items():
-    print key
-    print val
-    
-dict.clear()
-print dict
-for key, val in dict.items():
-    print key
-    print val
+dict = {(1, 2, 3):'a', (1, 2, 4):'b', (2, 3, 4):'c', (7, 8, 9):'d'}
+
+if (_, 2, _) in dict.keys():
+    print dict[(_, 2, _)]

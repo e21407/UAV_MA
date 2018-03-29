@@ -177,7 +177,7 @@ def initialize(_in_CandPaths_file, _in_Info_of_WF_file, _in_CapLinks_file, _in_I
 #==================== end of initialize function===================
 
 
-def initialize_assign_task_to_UAV_randomly():
+def Assign_task_to_UAV_randomly():
     global CandPathIDSet_for_2_UAVs, Path_database, Info_of_task, Info_of_WF, Cap_links, Info_of_UAV
     
     numOfUAVs = len(Lst_Assignable_UAV_ID)
@@ -208,11 +208,7 @@ def initialize_assign_task_to_UAV_randomly():
                     var_y_wpab[WF_ID, pathID, currTaskID, succTaskID] = 1
                     LogReplacement.write('initialize set -- WF_ID:%d, pathID:%d, currTaskID:%d, succTaskID:%d\n\n' % (WF_ID, pathID, currTaskID, succTaskID))
                     break
-    print 'initialize_assign_task_to_UAV_randomly done'
-#=======================end of function initialize_assign_task_to_UAV_randomly========     
-
-
-def Check_whether_a_task_has_assignment(WF_ID, task_ID):
+    print 'initialize_assign_taAssign_task_to_UAV_randomly============end of function initialize_assign_taAssign_task_to_UAV_randomlyef Check_whether_a_task_has_assignment(WF_ID, task_ID):
     for w, t, _ in var_x_wtk:
         if w == WF_ID and t == task_ID:
             # return 1 means the task has assigned to a UAV
@@ -549,8 +545,7 @@ def main():
     print "123 main() begin" 
     global step_times
     initialize(CandPaths_file, Info_of_WF_file, CapLinks_file, Info_of_task_file, Info_of_UAVs_file)
-    initialize_assign_task_to_UAV_randomly()
-    Update_system_metrics_in_Main()
+    initialize_assign_taAssign_task_to_UAV_randomlym_metrics_in_Main()
     Print_Current_Sys_Info()
     # print (global_system_throughput, global_weighted_RoutingCost, global_weighted_computeCost)
     Set_timer_for_all_task_flows(0.0)
