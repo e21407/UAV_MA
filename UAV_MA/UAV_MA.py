@@ -34,11 +34,13 @@ Aggregated_TR_in_acrs = {}  # {(u,v): aggregated-TR-in-arc-uv }. This variable r
 global_system_throughput = 0.0
 global_weighted_RoutingCost = 0.0
 global_weighted_computeCost = 0.0
-WEIGHT_OF_ROUTING_COST = 1
-WEIGHT_OF_COMPUTE_COST = 1
+global_weighted_throughput = 0.0
+WEIGHT_OF_ROUTING_COST = 5
+WEIGHT_OF_COMPUTE_COST = 5
+WEIGHT_OF_THROUGHPUT = 6
 
 # ==================================== USE-CASE ==============================================
-T = 200;  # # The total running period of system.
+T = 2;  # # The total running period of system.
 STEP_TO_RUN = 0.001;  # # The length of time-slot, e.g., 0.001 second is the BEST step after testing.
 STEP_TO_CHECK_TIMER = STEP_TO_RUN;  # # The step (length of interval) of check timer-expiration, e.g., 0.1 second.
 Beta = 6;  # # The parameter in the theoretical derivation.
@@ -228,6 +230,7 @@ def Assign_task_to_UAV_randomly(WF):
 #     print 'Assign_task_to_UAV_randomly done'
 #=======================end of function Assign_task_to_UAV_randomly========     
 
+
 #============================================================================
 def Check_whether_a_path_is_feasible_to_the_taskSegment(pathID, WF_ID, taskA_ID, taskB_ID):
     global Path_database, Info_of_WF, Cap_links, Aggregated_TR_in_acrs
@@ -256,6 +259,7 @@ def Get_the_need_bandwidth_of_a_task_flow(WF_ID, taskA_ID, taskB_ID):
             break
     return needed_bandwidth
 #============================================================================
+
 
 #============================================================================
 def One_a_Path(pathID, WF_ID, taskA_ID, taskB_ID):
@@ -325,6 +329,7 @@ def Get_list_of_satisfied_WF_ID():
     return ret_satisfied_WF_ID
 #=========================end of function Get_list_of_satisfied_WF_ID()===============
 
+
 #============================================================================
 # this function find out the ID and information of all unsatisfied workflow
 def Get_the_set_of_unsatisfied_WF():
@@ -372,9 +377,9 @@ def Update_system_metrics():
     # weight the cost
     weighted_routing_cost = WEIGHT_OF_ROUTING_COST * routingCost
     weighted_compute_cost = WEIGHT_OF_COMPUTE_COST * computeCost
-    
+    weighted_throughput = WEIGHT_OF_THROUGHPUT * system_throughput
     # # ---- update the current Objectives
-    global_system_throughput = system_throughput
+    global_system_throughput = weighted_throughput
     global_weighted_RoutingCost = weighted_routing_cost
     global_weighted_computeCost = weighted_compute_cost         
 #========end of function Update_system_metrics() ==============================
@@ -394,13 +399,6 @@ def Get_the_IU_pathID_between_two_task(WF_ID, taskA_ID, taskB_ID):
         if w == WF_ID and a == taskA_ID and b == taskB_ID:
             return p
     return -1
-
-# def Get_the_UAV_ID_of_a_task(WF_ID, task_ID):
-#     global var_x_wtk
-#     for w, t, u in var_x_wtk:
-#         if w == WF_ID and t == task_ID:
-#             return u
-#     return -1
 
 
 # get the in-use UAV id of a task ================= 
@@ -475,35 +473,7 @@ def Select_a_rdm_path_for_a_pair_of_UAVs(UAV1_ID, UAV2_ID):
     idx_targetPath = random.randint(0, len(candPath) - 1)
     return candPath[idx_targetPath]
 
-#===this function will do replacement process when a task assignment or path is changed
-#=== for a task flow (taskA, taskB), we only do replacement to the taskB===============
-# def Replace_the_selected_new_UAV_or_path_for_a_flow(WF_ID, taskA_ID, taskB_ID, UAVID_old, UAVID_new, pathID_old, pathID_new):
-#     LogReplacement.write('do replacement for --WF_ID:%d,  taskA_ID:%d, taskB_ID:%d, UAVID_old:%d, UAVID_new:%d, pathID_old:%d, pathID_new:%d\n' % (WF_ID, taskA_ID, taskB_ID, UAVID_old, UAVID_new, pathID_old, pathID_new))
-#     global var_x_wtk, var_y_wpab
-#     global len_of_var_y, len_of_var_y_flag
-#     if UAVID_old != UAVID_new:
-#         # 1.replace the task to a new UAV
-#         if (WF_ID, taskB_ID, UAVID_old) in var_x_wtk.keys():
-#             # 1.1 remove the task from the old UAV
-#             del var_x_wtk[(WF_ID, taskB_ID, UAVID_old)]
-#             LogReplacement.write('del var_x_wtk of --WF_ID:%d, taskB_ID:%d, UAVID_old:%d\n' % (WF_ID, taskB_ID, UAVID_old))
-#         # 1.2 assigned the task to a new UAV
-#         var_x_wtk[(WF_ID, taskB_ID, UAVID_new)] = 1
-#         LogReplacement.write('set var_x_wtk to 1 -- WF_ID:%d, taskB_ID:%d, UAVID_new:%d\n' % (WF_ID, taskB_ID, UAVID_new))
-#         
-#     # 2. change the path to the new UAV
-#     if (WF_ID, pathID_old, taskA_ID, taskB_ID) in  var_y_wpab.keys():
-#         # 2.1 remove the old path
-#         del var_y_wpab[(WF_ID, pathID_old, taskA_ID, taskB_ID)]
-#         LogReplacement.write('del var_y_wpab --WF_ID:%d, pathID_old:%d, taskA_ID:%d, taskB_ID:%d\n' % (WF_ID, pathID_old, taskA_ID, taskB_ID))
-#     # 2.2 start using the new path
-#     var_y_wpab[(WF_ID, pathID_new, taskA_ID, taskB_ID)] = 1
-#     LogReplacement.write('set var_y_wpab to 1 --WF_ID:%d, pathID_new:%d, taskA_ID:%d, taskB_ID:%d\n' % (WF_ID, pathID_new, taskA_ID, taskB_ID))
-#     LogReplacement.write('\n')
-#     len_of_var_y = len(var_y_wpab)
-#     # monitor whether it will make difference to the length of assigned path. If so, it means a bug shows up!!! 
-#     if len_of_var_y != len_of_var_y_flag:
-#         len_of_var_y_flag = len_of_var_y
+
 
 
 def Replace_the_selected_new_UAV_or_path_for_a_flow(WF_ID, taskA_ID, taskB_ID, UAVID_old, UAVID_new, pathID_old, pathID_new):
