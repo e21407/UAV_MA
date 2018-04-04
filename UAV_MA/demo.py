@@ -1,4 +1,5 @@
-dict = {(1, 2, 3):'a', (1, 2, 4):'b', (2, 3, 4):'c', (7, 8, 9):'d'}
-
-if (_, 2, _) in dict.keys():
-    print dict[(_, 2, _)]
+x = {'a': 1, 'b': 2}
+y = {'b': 3, 'c': 4}
+z = x.copy()
+z.update(y)
+print z

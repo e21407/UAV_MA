@@ -35,12 +35,12 @@ global_system_throughput = 0.0
 global_weighted_RoutingCost = 0.0
 global_weighted_computeCost = 0.0
 global_weighted_throughput = 0.0
-WEIGHT_OF_ROUTING_COST = 5
-WEIGHT_OF_COMPUTE_COST = 5
-WEIGHT_OF_THROUGHPUT = 6
+WEIGHT_OF_ROUTING_COST = 1
+WEIGHT_OF_COMPUTE_COST = 1
+WEIGHT_OF_THROUGHPUT = 1
 
 # ==================================== USE-CASE ==============================================
-T = 2;  # # The total running period of system.
+T = 5;  # # The total running period of system.
 STEP_TO_RUN = 0.001;  # # The length of time-slot, e.g., 0.001 second is the BEST step after testing.
 STEP_TO_CHECK_TIMER = STEP_TO_RUN;  # # The step (length of interval) of check timer-expiration, e.g., 0.1 second.
 Beta = 6;  # # The parameter in the theoretical derivation.
@@ -499,7 +499,7 @@ def Replace_the_selected_new_UAV_or_path_for_a_flow(WF_ID, taskA_ID, taskB_ID, U
     
     LogReplacement.write('\n')
     len_of_var_y = len(var_y_wpab)
-    # monitor whether it will make difference to the length of assigned path. If so, it means a bug shows up!!! 
+    # monitor whether it will make difference to the length of set about assigned path. If so, it means a bug shows up!!! 
     if len_of_var_y != len_of_var_y_flag:
         len_of_var_y_flag = len_of_var_y        
 
@@ -509,21 +509,16 @@ def Fake_Replace_UAV_or_Path_for_a_task_to_return_estimated_sysObj(WF_ID, taskA_
     # do replace
     LogReplacement.write('fake replace main\n')
     Replace_the_selected_new_UAV_or_path_for_a_flow(WF_ID, taskA_ID, taskB_ID, UAVID_old, UAVID_new, pathID_old, pathID_new)    
+    
     # find the successor task flow
     lst_affected_successor_task_flow = Find_the_flow_list_of_successor_task(WF_ID, taskB_ID)
-    
     dct_Info_of_successor_task_flow = {}
-    
     for a_flow in lst_affected_successor_task_flow:
-        # IU_UAVa_ID = Get_the_IU_UAV_ID_of_a_task(WF_ID, a_flow[0])
-        IU_UAVb_ID = Get_the_IU_UAV_ID_of_a_task(WF_ID, a_flow[1])
-        #**********************Suspected problem************************
         old_pathID = Get_the_IU_pathID_between_two_task(WF_ID, a_flow[0], a_flow[1])
-        #******************************************************************
         taskA_UAV_ID = Get_the_IU_UAV_ID_of_a_task(WF_ID, a_flow[0])
         taskB_UAV_ID = Get_the_IU_UAV_ID_of_a_task(WF_ID, a_flow[1])
         new_pathID = Select_a_rdm_path_for_a_pair_of_UAVs(taskA_UAV_ID, taskB_UAV_ID)
-        dct_Info_of_successor_task_flow[(a_flow[0], a_flow[1])] = (IU_UAVb_ID, old_pathID, new_pathID)
+        dct_Info_of_successor_task_flow[(a_flow[0], a_flow[1])] = (taskB_UAV_ID, old_pathID, new_pathID)
     # do replace to the affected successor task
     for key, val in dct_Info_of_successor_task_flow.items():
         LogReplacement.write('fake replace to successor\n')
@@ -536,12 +531,11 @@ def Fake_Replace_UAV_or_Path_for_a_task_to_return_estimated_sysObj(WF_ID, taskA_
     lst_affected_predecessor_task_flow = [(a_flow[0], a_flow[1]) for a_flow in result_list if a_flow[0] != taskA_ID]
     dct_Info_of_predecessor_task_flow = {}
     for a_flow in lst_affected_predecessor_task_flow:
-        IU_UAVb_ID = Get_the_IU_UAV_ID_of_a_task(WF_ID, a_flow[0])
         old_pathID = Get_the_IU_pathID_between_two_task(WF_ID, a_flow[0], a_flow[1])
         taskA_UAV_ID = Get_the_IU_UAV_ID_of_a_task(WF_ID, a_flow[0])
         taskB_UAV_ID = Get_the_IU_UAV_ID_of_a_task(WF_ID, a_flow[1])
         new_pathID = Select_a_rdm_path_for_a_pair_of_UAVs(taskA_UAV_ID, taskB_UAV_ID)
-        dct_Info_of_predecessor_task_flow[(a_flow[0], a_flow[1])] = (IU_UAVb_ID, old_pathID, new_pathID)
+        dct_Info_of_predecessor_task_flow[(a_flow[0], a_flow[1])] = (taskB_UAV_ID, old_pathID, new_pathID)
     for key, val in dct_Info_of_predecessor_task_flow.items():
         Replace_the_selected_new_UAV_or_path_for_a_flow(WF_ID, key[0], key[1], val[0], val[0], val[1], val[2])
     #=============================================================================
@@ -559,7 +553,10 @@ def Fake_Replace_UAV_or_Path_for_a_task_to_return_estimated_sysObj(WF_ID, taskA_
     # swap back the affected predecessor task flow
     for key, val in dct_Info_of_predecessor_task_flow.items():
         Replace_the_selected_new_UAV_or_path_for_a_flow(WF_ID, key[0], key[1], val[0], val[0], val[2], val[1])
-    return estimated_sysObj
+    #gather all the affected task flow as a set and return
+    ret_dict = dct_Info_of_successor_task_flow.copy()
+    ret_dict.update(dct_Info_of_predecessor_task_flow)
+    return estimated_sysObj, ret_dict
 #=======end of function Fake_Replace_UAV_or_Path_for_a_task_to_return_estimated_sysObj==================
 
 
@@ -620,7 +617,7 @@ def Set_timer_for_a_task_flow(current_ts, WF_ID, taskA_ID, taskB_ID):
     Update_system_metrics()
     Xf = Get_objVal_of_configurations_in_whole_system()
     
-    Xf_prime = Fake_Replace_UAV_or_Path_for_a_task_to_return_estimated_sysObj(WF_ID, taskA_ID, taskB_ID, UAVID_old, UAVID_new, pathID_old, pathID_new)
+    Xf_prime, dict_affected_task_flow = Fake_Replace_UAV_or_Path_for_a_task_to_return_estimated_sysObj(WF_ID, taskA_ID, taskB_ID, UAVID_old, UAVID_new, pathID_old, pathID_new)
     
     # write to log
 #     LogRun.write('WF_ID:%s, taskA_ID:%s, taskB_ID:%s, From UAV %s to UAV %s, old desUAVID:%s\n' % (str(WF_ID), str(taskA_ID), str(taskB_ID), str(UAVID_of_TaskA), str(UAVID_new), str(UAVID_old)))
@@ -645,13 +642,15 @@ def Set_timer_for_a_task_flow(current_ts, WF_ID, taskA_ID, taskB_ID):
     Timer_Key = (WF_ID, taskA_ID, taskB_ID)
     
     if Timer_Key not in Timers.keys():
-        Timers[Timer_Key] = [0, 0, -1, -1, -1, -1]
+        Timers[Timer_Key] = [0, 0, -1, -1, -1, -1, {}]
         Timers[Timer_Key][0] = current_ts
         Timers[Timer_Key][1] = Timer_val_exp
         Timers[Timer_Key][2] = pathID_old
         Timers[Timer_Key][3] = pathID_new
         Timers[Timer_Key][4] = UAVID_old
         Timers[Timer_Key][5] = UAVID_new
+        Timers[Timer_Key][6] = dict_affected_task_flow
+        
     else:
         Timers[Timer_Key][0] = current_ts
         Timers[Timer_Key][1] = Timer_val_exp
@@ -659,7 +658,7 @@ def Set_timer_for_a_task_flow(current_ts, WF_ID, taskA_ID, taskB_ID):
         Timers[Timer_Key][3] = pathID_new
         Timers[Timer_Key][4] = UAVID_old
         Timers[Timer_Key][5] = UAVID_new
-        
+        Timers[Timer_Key][6] = dict_affected_task_flow
 #================end of function Set_timer_for_a_task_flow================
         
 
@@ -672,14 +671,16 @@ def Check_expiration_of_timers(current_ts):
         pathID_new = val[3]
         UAVID_old = val[4]
         UAVID_new = val[5]
+        dict_affected_task_flow = val[6]
         
         if current_ts >= ts_begin + len_timer:
             if key not in ret_timer_result.keys():
-                ret_timer_result[key] = [-1, -1, -1, -1];
+                ret_timer_result[key] = [-1, -1, -1, -1, {}];
                 ret_timer_result[key][0] = pathID_old;
                 ret_timer_result[key][1] = pathID_new;
                 ret_timer_result[key][2] = UAVID_old;
                 ret_timer_result[key][3] = UAVID_new;
+                ret_timer_result[key][4] = dict_affected_task_flow;
                 
     return ret_timer_result    
 
@@ -733,44 +734,46 @@ def main():
                 pathID_new = val[1];  # # Get the returned pathID_new.
                 UAVID_old = val[2];  # # Get the returned Dst_MBox_cur.
                 UAVID_new = val[3];  # # Get the returned Dst_MBox_new.
+                dict_affected_task_flow = val[4] ## Get the affected task flow
                
                 # do replace
                 LogReplacement.write('true replace\n')
                 Replace_the_selected_new_UAV_or_path_for_a_flow(WF_ID, taskA_ID, taskB_ID, UAVID_old, UAVID_new, pathID_old, pathID_new)    
-                # find the successor task flow
-                lst_affected_successor_task_flow = Find_the_flow_list_of_successor_task(WF_ID, taskB_ID)
+                for key, val in dict_affected_task_flow.items():
+                    LogReplacement.write('true replace affected task flow\n')
+                    Replace_the_selected_new_UAV_or_path_for_a_flow(WF_ID, key[0], key[1], val[0], val[0], val[1], val[2])
                 
-                dct_Info_of_successor_task_flow = {}
-                for a_flow in lst_affected_successor_task_flow:
-                    IU_UAVb_ID = Get_the_IU_UAV_ID_of_a_task(WF_ID, a_flow[1])
-                    old_pathID = Get_the_IU_pathID_between_two_task(WF_ID, a_flow[0], a_flow[1])
-                    taskA_UAV_ID = Get_the_IU_UAV_ID_of_a_task(WF_ID, a_flow[0])
-                    taskB_UAV_ID = Get_the_IU_UAV_ID_of_a_task(WF_ID, a_flow[1])
-                    new_pathID = Select_a_rdm_path_for_a_pair_of_UAVs(taskA_UAV_ID, taskB_UAV_ID)
-                    dct_Info_of_successor_task_flow[(a_flow[0], a_flow[1])] = (IU_UAVb_ID, old_pathID, new_pathID)
-                    # do replace to the affected successor task
-                    for key, val in dct_Info_of_successor_task_flow.items():
-                        LogReplacement.write('true replace successor\n')
-                        Replace_the_selected_new_UAV_or_path_for_a_flow(WF_ID, key[0], key[1], val[0], val[0], val[1], val[2])
-                
-                # find the predecessor task flow
-                result_list = Find_the_flow_list_of_predecessor_task(WF_ID, taskB_ID)
-                # remove the current task flow which have been replaced from the predecessor task flow list
-                lst_affected_predecessor_task_flow = [(a_flow[0], a_flow[1]) for a_flow in result_list if a_flow[0] != taskA_ID]
-                
-                dct_Info_of_predecessor_task_flow = {}
-                for a_flow in lst_affected_predecessor_task_flow:
-                    IU_UAVb_ID = Get_the_IU_UAV_ID_of_a_task(WF_ID, a_flow[1])
-                    old_pathID = Get_the_IU_pathID_between_two_task(WF_ID, a_flow[0], a_flow[1])
-                    taskA_UAV_ID = Get_the_IU_UAV_ID_of_a_task(WF_ID, a_flow[0])
-                    taskB_UAV_ID = Get_the_IU_UAV_ID_of_a_task(WF_ID, a_flow[1])
-                    new_pathID = Select_a_rdm_path_for_a_pair_of_UAVs(taskA_UAV_ID, taskB_UAV_ID)
-                    dct_Info_of_predecessor_task_flow[(a_flow[0], a_flow[1])] = (IU_UAVb_ID, old_pathID, new_pathID)
-                    dct_Info_of_predecessor_task_flow[(a_flow[0], a_flow[1])] = (IU_UAVb_ID, old_pathID, new_pathID)
-                    for key, val in dct_Info_of_predecessor_task_flow.items():
-                        # do replace to the affected predecessor task
-                        LogReplacement.write('true replace predecessor\n')
-                        Replace_the_selected_new_UAV_or_path_for_a_flow(WF_ID, key[0], key[1], val[0], val[0], val[1], val[2])
+                #=========↓↓↓↓↓↓↓↓↓the old way to find new path for affected path with bug↓↓↓↓↓↓↓↓=============================================================
+#                 # find the successor task flow
+#                 lst_affected_successor_task_flow = Find_the_flow_list_of_successor_task(WF_ID, taskB_ID)
+#                 dct_Info_of_successor_task_flow = {}
+#                 for a_flow in lst_affected_successor_task_flow:
+#                     old_pathID = Get_the_IU_pathID_between_two_task(WF_ID, a_flow[0], a_flow[1])
+#                     taskA_UAV_ID = Get_the_IU_UAV_ID_of_a_task(WF_ID, a_flow[0])
+#                     taskB_UAV_ID = Get_the_IU_UAV_ID_of_a_task(WF_ID, a_flow[1])
+#                     new_pathID = Select_a_rdm_path_for_a_pair_of_UAVs(taskA_UAV_ID, taskB_UAV_ID)
+#                     dct_Info_of_successor_task_flow[(a_flow[0], a_flow[1])] = (taskB_UAV_ID, old_pathID, new_pathID)
+#                     # do replace to the affected successor task
+#                     for key, val in dct_Info_of_successor_task_flow.items():
+#                         LogReplacement.write('true replace successor\n')
+#                         Replace_the_selected_new_UAV_or_path_for_a_flow(WF_ID, key[0], key[1], val[0], val[0], val[1], val[2])
+#                 
+#                 # find the predecessor task flow
+#                 result_list = Find_the_flow_list_of_predecessor_task(WF_ID, taskB_ID)
+#                 # remove the current task flow which have been replaced from the predecessor task flow list
+#                 lst_affected_predecessor_task_flow = [(a_flow[0], a_flow[1]) for a_flow in result_list if a_flow[0] != taskA_ID]
+#                 dct_Info_of_predecessor_task_flow = {}
+#                 for a_flow in lst_affected_predecessor_task_flow:
+#                     old_pathID = Get_the_IU_pathID_between_two_task(WF_ID, a_flow[0], a_flow[1])
+#                     taskA_UAV_ID = Get_the_IU_UAV_ID_of_a_task(WF_ID, a_flow[0])
+#                     taskB_UAV_ID = Get_the_IU_UAV_ID_of_a_task(WF_ID, a_flow[1])
+#                     new_pathID = Select_a_rdm_path_for_a_pair_of_UAVs(taskA_UAV_ID, taskB_UAV_ID)
+#                     dct_Info_of_predecessor_task_flow[(a_flow[0], a_flow[1])] = (taskB_UAV_ID, old_pathID, new_pathID)
+#                     for key, val in dct_Info_of_predecessor_task_flow.items():
+#                         # do replace to the affected predecessor task
+#                         LogReplacement.write('true replace predecessor\n')
+#                         Replace_the_selected_new_UAV_or_path_for_a_flow(WF_ID, key[0], key[1], val[0], val[0], val[1], val[2])
+                #======↑↑↑↑↑↑the old way to find new path for affected path with bug↑↑↑↑↑↑↑↑↑↑↑↑============================================================
                 Delete_expired_timer_items_after_replacement(WF_ID, taskA_ID, taskB_ID)
                 Delete_all_timer()
                 
