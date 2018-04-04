@@ -10,8 +10,8 @@ import math
 
 #===================== input file name ======================#
 CandPaths_file = "_input_PathSet.txt"
-Info_of_WF_file = "_input_Info_of_workflow5.txt"
-Info_of_task_file = "_input_Info_of_task5.txt"
+Info_of_WF_file = "_input_Info_of_workflow6.txt"
+Info_of_task_file = "_input_Info_of_task6.txt"
 CapLinks_file = "_input_Cap_links.txt"
 Info_of_UAVs_file = "_input_Info_of_UAVs.txt"
 
