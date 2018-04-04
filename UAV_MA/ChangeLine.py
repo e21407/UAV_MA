@@ -1,6 +1,4 @@
 import random
-from sys import stdin
-from idlelib.ReplaceDialog import replace
 
 rangeOfBandwidth = 100
 rangeOfCap = 1000

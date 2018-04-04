@@ -9,7 +9,7 @@ import random
 import math
 
 #===================== input file name ======================#
-CandPaths_file = "_input_PathSet.txt"
+CandPaths_file = "_input_PathSet2.txt"
 Info_of_WF_file = "_input_Info_of_workflow6.txt"
 Info_of_task_file = "_input_Info_of_task6.txt"
 CapLinks_file = "_input_Cap_links.txt"
@@ -40,7 +40,7 @@ WEIGHT_OF_COMPUTE_COST = 1
 WEIGHT_OF_THROUGHPUT = 1
 
 # ==================================== USE-CASE ==============================================
-T = 5;  # # The total running period of system.
+T = 200;  # # The total running period of system.
 STEP_TO_RUN = 0.001;  # # The length of time-slot, e.g., 0.001 second is the BEST step after testing.
 STEP_TO_CHECK_TIMER = STEP_TO_RUN;  # # The step (length of interval) of check timer-expiration, e.g., 0.1 second.
 Beta = 6;  # # The parameter in the theoretical derivation.
@@ -629,11 +629,13 @@ def Set_timer_for_a_task_flow(current_ts, WF_ID, taskA_ID, taskB_ID):
     # print Xf_prime - Xf
     # print 'Xf:%f, Xf_prime:%f, gap:%f'%(Xf, Xf_prime, Xf_prime - Xf)
     try:
-        exp_item = math.exp(Tau - 0.5 * Beta * (Xf_prime - Xf))
+        exp_item = math.exp(Tau - 0.5 * Beta * (Xf_prime - Xf)) + 0.00000001
     except:
         exp_item = math.exp(709)
     mean_timer_exp = 1.0 * exp_item / (len(Lst_Assignable_UAV_ID) - 1);
     # print 'exp_item: %f'%exp_item
+    if mean_timer_exp == 0:
+        print mean_timer_exp
     lambda_exp_random_number_seed = 1.0 / mean_timer_exp;
     # lambda_exp_random_number_seed = mean_timer_exp
     Timer_val_exp = random.expovariate(lambda_exp_random_number_seed);
