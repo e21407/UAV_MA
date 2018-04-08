@@ -10,8 +10,8 @@ import math
 
 #===================== input file name ======================#
 CandPaths_file = "_input_PathSet2.txt"
-Info_of_WF_file = "_input_Info_of_workflow11.txt"
-Info_of_task_file = "_input_Info_of_task11.txt"
+Info_of_WF_file = "_input_Info_of_workflow7.txt"
+Info_of_task_file = "_input_Info_of_task7.txt"
 CapLinks_file = "_input_Cap_links10000.txt"
 Info_of_UAVs_file = "_input_Info_of_UAVs.txt"
 
@@ -52,8 +52,8 @@ Lst_Assignable_UAV_ID = []  # list of UAV's ID which can be assigned task
 
 #=================================================
 LogRun = open('Log_running.txt', 'w')
-LogVar_X = open('log_Var_X.txt', 'w')
-LogVar_Y = open('log_Var_Y.txt', 'w')
+# LogVar_X = open('log_Var_X.txt', 'w')
+# LogVar_Y = open('log_Var_Y.txt', 'w')
 LogReplacement = open('logReplacement.txt', 'w')
 LogPerformanceRecord = open('logPerformance_main.txt', 'w')
 
@@ -197,14 +197,21 @@ def Assign_task_to_UAV_randomly(WF):
             currTaskID = a_flow[0]
             succTaskID = a_flow[1]
             # --- assign the task to the UAV and find the path randomly
-            tryNo = 10
+            tryNo = 10  #give up assigning this work flow if fail 10 times
             while tryNo > 0:
                 # randomly select  UAVs
                 idx_UAV1 = random.randint(0, numOfUAVs - 1)
                 idx_UAV2 = random.randint(0, numOfUAVs - 1)
-                if idx_UAV1 == idx_UAV2:
-                    #print 'hit'
-                    continue
+                if succTaskID == 0: #0 means this task is a special task to transfer data to the back end, so its UAV should be fixed.
+                    idx_UAV2 = numOfUAVs - 1
+                if idx_UAV1 == idx_UAV2:    # avoid 2 tasks in a task flow are assigned to the same UAV 
+                    # print 'hit'
+                    # continue
+                    if idx_UAV1 == numOfUAVs - 1:
+                        idx_UAV1 -= 1
+                    else:
+                        idx_UAV1 += 1
+                    
                 UAV_ID1 = Lst_Assignable_UAV_ID[idx_UAV1]
                 UAV_ID2 = Lst_Assignable_UAV_ID[idx_UAV2]
                 pathID_list = Find_pathID_list_for_a_pair_of_UAVs(UAV_ID1, UAV_ID2)
@@ -298,6 +305,7 @@ def Check_whether_a_task_has_assignment(WF_ID, task_ID):
     # return 0 means the task has not assigned to a UAV
     return 0
 
+
 #============================================================================
 def Find_pathID_list_for_a_pair_of_UAVs(UAV_ID1, UAV_ID2):
     if (UAV_ID1, UAV_ID2) in CandPathIDSet_for_2_UAVs:
@@ -350,6 +358,7 @@ def Move_unsatisfied_WF_from_UAVs():
         for (workflow_ID, task_ID, UAV_ID) in var_x_wtk.keys():
             if WF_ID == workflow_ID:
                 del var_x_wtk[(workflow_ID, task_ID, UAV_ID)]
+
 
 #=====================================================================================
 def Update_system_metrics():
@@ -484,8 +493,6 @@ def Select_a_rdm_path_for_a_pair_of_UAVs(UAV1_ID, UAV2_ID):
     return candPath[idx_targetPath]
 
 
-
-
 def Replace_the_selected_new_UAV_or_path_for_a_flow(WF_ID, taskA_ID, taskB_ID, UAVID_old, UAVID_new, pathID_old, pathID_new):
     LogReplacement.write('do replacement for --WF_ID:%d,  taskA_ID:%d, taskB_ID:%d, UAVID_old:%d, UAVID_new:%d, pathID_old:%d, pathID_new:%d\n' % (WF_ID, taskA_ID, taskB_ID, UAVID_old, UAVID_new, pathID_old, pathID_new))
     global var_x_wtk, var_y_wpab
@@ -563,7 +570,7 @@ def Fake_Replace_UAV_or_Path_for_a_task_to_return_estimated_sysObj(WF_ID, taskA_
     # swap back the affected predecessor task flow
     for key, val in dct_Info_of_predecessor_task_flow.items():
         Replace_the_selected_new_UAV_or_path_for_a_flow(WF_ID, key[0], key[1], val[0], val[0], val[2], val[1])
-    #gather all the affected task flow as a set and return
+    # gather all the affected task flow as a set and return
     ret_dict = dct_Info_of_successor_task_flow.copy()
     ret_dict.update(dct_Info_of_predecessor_task_flow)
     return estimated_sysObj, ret_dict
@@ -601,7 +608,8 @@ def Set_timer_for_all_task_flows(current_ts):
         lst_task_flows = Info_of_WF[WF_ID]
         for a_flow in lst_task_flows:
             taskA_ID, taskB_ID = a_flow[0], a_flow[1]
-            Set_timer_for_a_task_flow(current_ts, WF_ID, taskA_ID, taskB_ID)
+            if taskB_ID != 0:   #0 means this task is a special task to transfer data to the back end, so its UAV should be fixed.
+                Set_timer_for_a_task_flow(current_ts, WF_ID, taskA_ID, taskB_ID)
             
 
 #========================================================================
@@ -717,7 +725,7 @@ def main():
     initializeReadData(CandPaths_file, Info_of_WF_file, CapLinks_file, Info_of_task_file, Info_of_UAVs_file)
     Assign_task_to_UAV_randomly(Info_of_WF)
     LogPerformanceRecord.write('running under setting:\n')
-    settingStr = CandPaths_file + '\t' + Info_of_WF_file + '\t' + Info_of_task_file + '\t' +  CapLinks_file + '\t' + Info_of_UAVs_file + "\n"
+    settingStr = CandPaths_file + '\t' + Info_of_WF_file + '\t' + Info_of_task_file + '\t' + CapLinks_file + '\t' + Info_of_UAVs_file + "\n"
     LogPerformanceRecord.write(settingStr + '\n')
     Update_system_metrics()
     Print_Current_Sys_Info()
@@ -749,7 +757,7 @@ def main():
                 pathID_new = val[1];  # # Get the returned pathID_new.
                 UAVID_old = val[2];  # # Get the returned Dst_MBox_cur.
                 UAVID_new = val[3];  # # Get the returned Dst_MBox_new.
-                dict_affected_task_flow = val[4] ## Get the affected task flow
+                dict_affected_task_flow = val[4]  # # Get the affected task flow
                
                 # do replace
                 LogReplacement.write('true replace\n')
@@ -792,8 +800,6 @@ def main():
                 Delete_expired_timer_items_after_replacement(WF_ID, taskA_ID, taskB_ID)
                 Delete_all_timer()
                 
-
-                
         if 1 == RESET_Msg:
             RESET(current_ts)
         
@@ -806,14 +812,13 @@ def main():
         if (step_times % 1 == 0):
             Print_Current_Sys_Info()         
         
-        #find out the unsatisfied workflow and try to assign them to the UAV once again
+        # find out the unsatisfied workflow and try to assign them to the UAV once again
         unsatisfied_WF = Get_the_set_of_unsatisfied_WF()
         Assign_task_to_UAV_randomly(unsatisfied_WF)
     
-    
     LogRun.close()
-    LogVar_X.close()
-    LogVar_Y.close()
+#     LogVar_X.close()
+#     LogVar_Y.close()
     LogReplacement.close()
     LogPerformanceRecord.close()        
     print "finish"
