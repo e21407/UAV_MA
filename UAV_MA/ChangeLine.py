@@ -3,11 +3,11 @@ import random
 rangeOfBandwidth = 100
 rangeOfCap = 1000
 
-input_Info_of_workflow = '_input_Info_of_workflow6.txt'
-input_Info_of_task = '_input_Info_of_task6.txt' 
+input_Info_of_workflow = '_input_Info_of_workflow1.txt'
+input_Info_of_task = '_input_Info_of_task1.txt' 
 
-output_file_workflow = '_input_Info_of_workflow7.txt'
-output_file_task = '_input_Info_of_task7.txt'
+output_file_workflow = '_input_Info_of_workflow11.txt'
+output_file_task = '_input_Info_of_task11.txt'
 
 new_workflow_file = open(output_file_workflow, 'w')
 new_task_file = open(output_file_task, 'w')

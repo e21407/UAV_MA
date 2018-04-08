@@ -10,9 +10,9 @@ import math
 
 #===================== input file name ======================#
 CandPaths_file = "_input_PathSet2.txt"
-Info_of_WF_file = "_input_Info_of_workflow6.txt"
-Info_of_task_file = "_input_Info_of_task6.txt"
-CapLinks_file = "_input_Cap_links.txt"
+Info_of_WF_file = "_input_Info_of_workflow11.txt"
+Info_of_task_file = "_input_Info_of_task11.txt"
+CapLinks_file = "_input_Cap_links10000.txt"
 Info_of_UAVs_file = "_input_Info_of_UAVs.txt"
 
 #===================== global variable ======================#
@@ -36,11 +36,11 @@ global_weighted_RoutingCost = 0.0
 global_weighted_computeCost = 0.0
 global_weighted_throughput = 0.0
 WEIGHT_OF_ROUTING_COST = 1
-WEIGHT_OF_COMPUTE_COST = 1
+WEIGHT_OF_COMPUTE_COST = 0.8
 WEIGHT_OF_THROUGHPUT = 1
 
 # ==================================== USE-CASE ==============================================
-T = 200;  # # The total running period of system.
+T = 100;  # # The total running period of system.
 STEP_TO_RUN = 0.001;  # # The length of time-slot, e.g., 0.001 second is the BEST step after testing.
 STEP_TO_CHECK_TIMER = STEP_TO_RUN;  # # The step (length of interval) of check timer-expiration, e.g., 0.1 second.
 Beta = 6;  # # The parameter in the theoretical derivation.
@@ -340,13 +340,23 @@ def Get_the_set_of_unsatisfied_WF():
         if key not in lst_satisfied_WF_ID:
             result_dict[key] = val
     return result_dict
+#============================================================================
+
+
+def Move_unsatisfied_WF_from_UAVs():
+    global var_x_wtk
+    unsatisfied_WF_lst = Get_the_set_of_unsatisfied_WF()
+    for WF_ID in unsatisfied_WF_lst:
+        for (workflow_ID, task_ID, UAV_ID) in var_x_wtk.keys():
+            if WF_ID == workflow_ID:
+                del var_x_wtk[(workflow_ID, task_ID, UAV_ID)]
 
 #=====================================================================================
 def Update_system_metrics():
     global Info_of_WF, Path_database, Info_of_UAV, Info_of_task
     global global_system_throughput, global_weighted_RoutingCost, global_weighted_computeCost
     global WEIGHT_OF_ROUTING_COST, WEIGHT_OF_COMPUTE_COST
-    
+    Move_unsatisfied_WF_from_UAVs()
     system_throughput = 0.0
     routingCost = 0.0
     computeCost = 0.0
@@ -469,7 +479,7 @@ def Get_list_of_NIU_pathIDs_between_2_task(WF_ID, taskA_ID, taskB_ID):
 def Select_a_rdm_path_for_a_pair_of_UAVs(UAV1_ID, UAV2_ID):
     candPath = Find_pathID_list_for_a_pair_of_UAVs(UAV1_ID, UAV2_ID)
     if  not candPath:
-        print '22'
+        return
     idx_targetPath = random.randint(0, len(candPath) - 1)
     return candPath[idx_targetPath]
 
@@ -706,6 +716,9 @@ def main():
     global step_times, Timers, Info_of_WF
     initializeReadData(CandPaths_file, Info_of_WF_file, CapLinks_file, Info_of_task_file, Info_of_UAVs_file)
     Assign_task_to_UAV_randomly(Info_of_WF)
+    LogPerformanceRecord.write('running under setting:\n')
+    settingStr = CandPaths_file + '\t' + Info_of_WF_file + '\t' + Info_of_task_file + '\t' +  CapLinks_file + '\t' + Info_of_UAVs_file + "\n"
+    LogPerformanceRecord.write(settingStr + '\n')
     Update_system_metrics()
     Print_Current_Sys_Info()
     # print (global_system_throughput, global_weighted_RoutingCost, global_weighted_computeCost)

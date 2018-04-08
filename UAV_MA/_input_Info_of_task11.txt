@@ -1,64 +1,64 @@
--workflow_ID	1	-task_ID	1	-Cap	83	867	
--workflow_ID	1	-task_ID	2	-Cap	673	108	
--workflow_ID	1	-task_ID	4	-Cap	160	283	
--workflow_ID	1	-task_ID	5	-Cap	536	759	
--workflow_ID	1	-task_ID	7	-Cap	264	768	
--workflow_ID	1	-task_ID	9	-Cap	778	515	
--workflow_ID	2	-task_ID	1	-Cap	515	71	
--workflow_ID	2	-task_ID	2	-Cap	126	384	
--workflow_ID	2	-task_ID	4	-Cap	994	130	
--workflow_ID	2	-task_ID	5	-Cap	341	89	
--workflow_ID	2	-task_ID	7	-Cap	365	787	
--workflow_ID	2	-task_ID	9	-Cap	244	373	
--workflow_ID	3	-task_ID	1	-Cap	300	785	
--workflow_ID	3	-task_ID	2	-Cap	939	751	
--workflow_ID	3	-task_ID	4	-Cap	766	144	
--workflow_ID	3	-task_ID	5	-Cap	900	429	
--workflow_ID	3	-task_ID	7	-Cap	626	356	
--workflow_ID	3	-task_ID	9	-Cap	395	973	
--workflow_ID	4	-task_ID	1	-Cap	715	208	
--workflow_ID	4	-task_ID	2	-Cap	705	484	
--workflow_ID	4	-task_ID	4	-Cap	346	561	
--workflow_ID	4	-task_ID	5	-Cap	522	790	
--workflow_ID	4	-task_ID	7	-Cap	630	213	
--workflow_ID	4	-task_ID	9	-Cap	295	315	
--workflow_ID	5	-task_ID	1	-Cap	102	898	
--workflow_ID	5	-task_ID	2	-Cap	693	673	
--workflow_ID	5	-task_ID	4	-Cap	429	504	
--workflow_ID	5	-task_ID	5	-Cap	584	937	
--workflow_ID	5	-task_ID	7	-Cap	209	724	
--workflow_ID	6	-task_ID	1	-Cap	986	499	
--workflow_ID	6	-task_ID	2	-Cap	998	986	
--workflow_ID	6	-task_ID	4	-Cap	950	360	
--workflow_ID	6	-task_ID	5	-Cap	53	205	
--workflow_ID	6	-task_ID	7	-Cap	789	129	
--workflow_ID	7	-task_ID	1	-Cap	123	412	
--workflow_ID	7	-task_ID	2	-Cap	861	478	
--workflow_ID	7	-task_ID	4	-Cap	290	700	
--workflow_ID	7	-task_ID	5	-Cap	959	569	
--workflow_ID	7	-task_ID	7	-Cap	754	733	
--workflow_ID	8	-task_ID	1	-Cap	426	328	
--workflow_ID	8	-task_ID	2	-Cap	214	136	
--workflow_ID	8	-task_ID	4	-Cap	950	539	
--workflow_ID	8	-task_ID	5	-Cap	780	776	
--workflow_ID	8	-task_ID	7	-Cap	360	233	
--workflow_ID	9	-task_ID	1	-Cap	988	80	
--workflow_ID	9	-task_ID	2	-Cap	482	549	
--workflow_ID	9	-task_ID	4	-Cap	389	178	
--workflow_ID	9	-task_ID	5	-Cap	848	688	
--workflow_ID	9	-task_ID	7	-Cap	483	566	
--workflow_ID	10	-task_ID	1	-Cap	624	544	
--workflow_ID	10	-task_ID	2	-Cap	723	156	
--workflow_ID	10	-task_ID	4	-Cap	953	244	
--workflow_ID	10	-task_ID	5	-Cap	565	201	
--workflow_ID	10	-task_ID	7	-Cap	549	106	
--workflow_ID	11	-task_ID	1	-Cap	425	149	
--workflow_ID	11	-task_ID	2	-Cap	671	604	
--workflow_ID	11	-task_ID	4	-Cap	533	929	
--workflow_ID	11	-task_ID	5	-Cap	187	408	
--workflow_ID	11	-task_ID	7	-Cap	890	124	
--workflow_ID	12	-task_ID	1	-Cap	164	882	
--workflow_ID	12	-task_ID	2	-Cap	983	339	
--workflow_ID	12	-task_ID	4	-Cap	241	289	
--workflow_ID	12	-task_ID	5	-Cap	557	311	
--workflow_ID	12	-task_ID	7	-Cap	150	525	
+-workflow_ID	1	-task_ID	1	-Cap	162	
+-workflow_ID	1	-task_ID	2	-Cap	88	
+-workflow_ID	1	-task_ID	4	-Cap	525	
+-workflow_ID	1	-task_ID	5	-Cap	380	
+-workflow_ID	1	-task_ID	7	-Cap	193	
+-workflow_ID	1	-task_ID	9	-Cap	711	
+-workflow_ID	2	-task_ID	1	-Cap	741	
+-workflow_ID	2	-task_ID	2	-Cap	693	
+-workflow_ID	2	-task_ID	4	-Cap	802	
+-workflow_ID	2	-task_ID	5	-Cap	385	
+-workflow_ID	2	-task_ID	7	-Cap	541	
+-workflow_ID	2	-task_ID	9	-Cap	754	
+-workflow_ID	3	-task_ID	1	-Cap	703	
+-workflow_ID	3	-task_ID	2	-Cap	826	
+-workflow_ID	3	-task_ID	4	-Cap	954	
+-workflow_ID	3	-task_ID	5	-Cap	775	
+-workflow_ID	3	-task_ID	7	-Cap	390	
+-workflow_ID	3	-task_ID	9	-Cap	386	
+-workflow_ID	4	-task_ID	1	-Cap	59	
+-workflow_ID	4	-task_ID	2	-Cap	435	
+-workflow_ID	4	-task_ID	4	-Cap	57	
+-workflow_ID	4	-task_ID	5	-Cap	630	
+-workflow_ID	4	-task_ID	7	-Cap	654	
+-workflow_ID	4	-task_ID	9	-Cap	509	
+-workflow_ID	5	-task_ID	1	-Cap	616	
+-workflow_ID	5	-task_ID	2	-Cap	239	
+-workflow_ID	5	-task_ID	4	-Cap	677	
+-workflow_ID	5	-task_ID	5	-Cap	838	
+-workflow_ID	5	-task_ID	7	-Cap	226	
+-workflow_ID	6	-task_ID	1	-Cap	133	
+-workflow_ID	6	-task_ID	2	-Cap	84	
+-workflow_ID	6	-task_ID	4	-Cap	593	
+-workflow_ID	6	-task_ID	5	-Cap	856	
+-workflow_ID	6	-task_ID	7	-Cap	805	
+-workflow_ID	7	-task_ID	1	-Cap	830	
+-workflow_ID	7	-task_ID	2	-Cap	576	
+-workflow_ID	7	-task_ID	4	-Cap	631	
+-workflow_ID	7	-task_ID	5	-Cap	398	
+-workflow_ID	7	-task_ID	7	-Cap	246	
+-workflow_ID	8	-task_ID	1	-Cap	880	
+-workflow_ID	8	-task_ID	2	-Cap	189	
+-workflow_ID	8	-task_ID	4	-Cap	101	
+-workflow_ID	8	-task_ID	5	-Cap	495	
+-workflow_ID	8	-task_ID	7	-Cap	562	
+-workflow_ID	9	-task_ID	1	-Cap	351	
+-workflow_ID	9	-task_ID	2	-Cap	174	
+-workflow_ID	9	-task_ID	4	-Cap	191	
+-workflow_ID	9	-task_ID	5	-Cap	918	
+-workflow_ID	9	-task_ID	7	-Cap	148	
+-workflow_ID	10	-task_ID	1	-Cap	783	
+-workflow_ID	10	-task_ID	2	-Cap	939	
+-workflow_ID	10	-task_ID	4	-Cap	604	
+-workflow_ID	10	-task_ID	5	-Cap	731	
+-workflow_ID	10	-task_ID	7	-Cap	564	
+-workflow_ID	11	-task_ID	1	-Cap	159	
+-workflow_ID	11	-task_ID	2	-Cap	908	
+-workflow_ID	11	-task_ID	4	-Cap	392	
+-workflow_ID	11	-task_ID	5	-Cap	410	
+-workflow_ID	11	-task_ID	7	-Cap	722	
+-workflow_ID	12	-task_ID	1	-Cap	823	
+-workflow_ID	12	-task_ID	2	-Cap	746	
+-workflow_ID	12	-task_ID	4	-Cap	870	
+-workflow_ID	12	-task_ID	5	-Cap	881	
+-workflow_ID	12	-task_ID	7	-Cap	427	
