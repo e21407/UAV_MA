@@ -10,8 +10,8 @@ import math
 
 #===================== input file name ======================#
 CandPaths_file = "_input_PathSet2.txt"
-Info_of_WF_file = "_input_Info_of_workflow7.txt"
-Info_of_task_file = "_input_Info_of_task7.txt"
+Info_of_WF_file = "_input_Info_of_workflow6.txt"
+Info_of_task_file = "_input_Info_of_task60.txt"
 CapLinks_file = "_input_Cap_links10000.txt"
 Info_of_UAVs_file = "_input_Info_of_UAVs.txt"
 
@@ -35,8 +35,8 @@ global_system_throughput = 0.0
 global_weighted_RoutingCost = 0.0
 global_weighted_computeCost = 0.0
 global_weighted_throughput = 0.0
-WEIGHT_OF_ROUTING_COST = 1
 WEIGHT_OF_COMPUTE_COST = 0.8
+WEIGHT_OF_ROUTING_COST = 1
 WEIGHT_OF_THROUGHPUT = 1
 
 # ==================================== USE-CASE ==============================================
@@ -55,7 +55,7 @@ LogRun = open('Log_running.txt', 'w')
 # LogVar_X = open('log_Var_X.txt', 'w')
 # LogVar_Y = open('log_Var_Y.txt', 'w')
 LogReplacement = open('logReplacement.txt', 'w')
-LogPerformanceRecord = open('logPerformance_main.txt', 'w')
+LogPerformanceRecord = open('logPerformance_MA.txt', 'w')
 
 #====debug variable======
 len_of_var_y_flag = 0
@@ -188,11 +188,11 @@ def initializeReadData(_in_CandPaths_file, _in_Info_of_WF_file, _in_CapLinks_fil
 
 
 # randomly assign task to UAV and find a path for the tasks have communication
-def Assign_task_to_UAV_randomly(WF):
+def Assign_task_to_UAV_randomly(WFs):
     global CandPathIDSet_for_2_UAVs, Path_database, Info_of_task, Cap_links, Info_of_UAV
     
     numOfUAVs = len(Lst_Assignable_UAV_ID)
-    for WF_ID, content in WF.items():
+    for WF_ID, content in WFs.items():
         for a_flow in content:
             currTaskID = a_flow[0]
             succTaskID = a_flow[1]
@@ -384,7 +384,7 @@ def Update_system_metrics():
             if IU_PathID != -1:
                 routingCost += len(Path_database[IU_PathID])
                 
-    # --3 calculate the compute cost
+    # --3 calculate the computation cost
     for key, val in Info_of_UAV.items():
         task_list_assigned_to_a_UAV = Get_the_task_list_assigned_to_a_UAV(key)
         total_Cap_of_a_UAV = 0
@@ -728,6 +728,10 @@ def main():
     settingStr = CandPaths_file + '\t' + Info_of_WF_file + '\t' + Info_of_task_file + '\t' + CapLinks_file + '\t' + Info_of_UAVs_file + "\n"
     LogPerformanceRecord.write(settingStr + '\n')
     Update_system_metrics()
+    # calculate the performance
+    performance = global_system_throughput - global_weighted_RoutingCost - global_weighted_computeCost
+    # record the system performance information
+    LogPerformanceRecord.write("-step:%d  -performance\t%2.2f\t-thr\t%2.2f\t-RoutingCost\t%2.2f\t-computeCost\t%2.3f\n" % (step_times, performance, global_system_throughput, global_weighted_RoutingCost, global_weighted_computeCost))
     Print_Current_Sys_Info()
     # print (global_system_throughput, global_weighted_RoutingCost, global_weighted_computeCost)
     Set_timer_for_all_task_flows(0.0)
@@ -766,37 +770,6 @@ def main():
                     LogReplacement.write('true replace affected task flow\n')
                     Replace_the_selected_new_UAV_or_path_for_a_flow(WF_ID, key[0], key[1], val[0], val[0], val[1], val[2])
                 
-                #=========↓↓↓↓↓↓↓↓↓the old way to find new path for affected path with bug↓↓↓↓↓↓↓↓=============================================================
-#                 # find the successor task flow
-#                 lst_affected_successor_task_flow = Find_the_flow_list_of_successor_task(WF_ID, taskB_ID)
-#                 dct_Info_of_successor_task_flow = {}
-#                 for a_flow in lst_affected_successor_task_flow:
-#                     old_pathID = Get_the_IU_pathID_between_two_task(WF_ID, a_flow[0], a_flow[1])
-#                     taskA_UAV_ID = Get_the_IU_UAV_ID_of_a_task(WF_ID, a_flow[0])
-#                     taskB_UAV_ID = Get_the_IU_UAV_ID_of_a_task(WF_ID, a_flow[1])
-#                     new_pathID = Select_a_rdm_path_for_a_pair_of_UAVs(taskA_UAV_ID, taskB_UAV_ID)
-#                     dct_Info_of_successor_task_flow[(a_flow[0], a_flow[1])] = (taskB_UAV_ID, old_pathID, new_pathID)
-#                     # do replace to the affected successor task
-#                     for key, val in dct_Info_of_successor_task_flow.items():
-#                         LogReplacement.write('true replace successor\n')
-#                         Replace_the_selected_new_UAV_or_path_for_a_flow(WF_ID, key[0], key[1], val[0], val[0], val[1], val[2])
-#                 
-#                 # find the predecessor task flow
-#                 result_list = Find_the_flow_list_of_predecessor_task(WF_ID, taskB_ID)
-#                 # remove the current task flow which have been replaced from the predecessor task flow list
-#                 lst_affected_predecessor_task_flow = [(a_flow[0], a_flow[1]) for a_flow in result_list if a_flow[0] != taskA_ID]
-#                 dct_Info_of_predecessor_task_flow = {}
-#                 for a_flow in lst_affected_predecessor_task_flow:
-#                     old_pathID = Get_the_IU_pathID_between_two_task(WF_ID, a_flow[0], a_flow[1])
-#                     taskA_UAV_ID = Get_the_IU_UAV_ID_of_a_task(WF_ID, a_flow[0])
-#                     taskB_UAV_ID = Get_the_IU_UAV_ID_of_a_task(WF_ID, a_flow[1])
-#                     new_pathID = Select_a_rdm_path_for_a_pair_of_UAVs(taskA_UAV_ID, taskB_UAV_ID)
-#                     dct_Info_of_predecessor_task_flow[(a_flow[0], a_flow[1])] = (taskB_UAV_ID, old_pathID, new_pathID)
-#                     for key, val in dct_Info_of_predecessor_task_flow.items():
-#                         # do replace to the affected predecessor task
-#                         LogReplacement.write('true replace predecessor\n')
-#                         Replace_the_selected_new_UAV_or_path_for_a_flow(WF_ID, key[0], key[1], val[0], val[0], val[1], val[2])
-                #======↑↑↑↑↑↑the old way to find new path for affected path with bug↑↑↑↑↑↑↑↑↑↑↑↑============================================================
                 Delete_expired_timer_items_after_replacement(WF_ID, taskA_ID, taskB_ID)
                 Delete_all_timer()
                 

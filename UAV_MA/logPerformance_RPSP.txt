@@ -1,0 +1,4 @@
+running under setting:
+_input_PathSet2.txt	_input_Info_of_workflow6.txt	_input_Info_of_task60.txt	_input_Cap_links10000.txt	_input_Info_of_UAVs.txt
+
+-performance	3809.87	-thr	6296.00	-RoutingCost	371.00	-computeCost	2115.126
