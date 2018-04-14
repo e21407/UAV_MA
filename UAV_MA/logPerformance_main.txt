@@ -1,3 +1,0 @@
-running under setting:
-_input_PathSet2.txt	_input_Info_of_workflow6.txt	_input_Info_of_task60.txt	_input_Cap_links10000.txt	_input_Info_of_UAVs.txt
-
