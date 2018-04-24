@@ -1,0 +1,4 @@
+running under setting:
+input_data/_input_PathSet2.txt	input_data/_input_Info_of_workflow6.txt	input_data/_input_Info_of_task6.txt	input_data/_input_Cap_links10000.txt	input_data/_input_Info_of_nodes.txt
+
+-step:0  -performance	4202.37	-thr	6296.00	-RoutingCost	307.00	-computeCost	1786.632
